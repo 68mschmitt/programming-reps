@@ -1,0 +1,4 @@
+padded int: ______42
+signed int: +42
+precise float: 3.142
+zero-padded: 00000007

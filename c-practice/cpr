@@ -3,12 +3,6 @@ set -euo pipefail
 name="${1:?exercise name required}"
 mkdir -p "$name"/tests
 cat > "$name/main.c" <<'C'
-#include <stdio.h>
-
-int main(void) {
-    // TODO: implement
-    return 0;
-}
 C
 # Copy a template Makefile and tests (adjust path if needed)
 cat > "$name/Makefile" <<'M'
@@ -62,6 +56,7 @@ src="${1:-main.c}"
 # Add per-exercise checks; example:
 # grep -q 'printf\s*\(' "$src" || { echo "use printf"; exit 1; }
 echo "[CHECK] (no checks defined)"
+# echo "[CHECK] Format specifiers validated."
 C
 chmod +x "$name/tests/checks.sh"
 echo "Created exercise: $name"
