@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -euo pipefail
+name="${1:?exercise name required}"
+mkdir -p "$name"/tests
+cat > "$name/main.c" <<'C'
+#include <stdio.h>
+
+int main(void) {
+    // TODO: implement
+    return 0;
+}
+C
+# Copy a template Makefile and tests (adjust path if needed)
+cat > "$name/Makefile" <<'M'
+APP      := app
+BUILD    := build
+SRC      := main.c
+CC       := gcc
+CSTD     := c11
+CFLAGS   := -std=$(CSTD) -Wall -Wextra -Wpedantic -Wshadow -Wconversion -O0 -g
+ifeq ($(SAN),1)
+CFLAGS   += -fsanitize=address,undefined
+LDFLAGS  += -fsanitize=address,undefined
+endif
+
+.PHONY: all run test clean watch
+all: $(BUILD)/$(APP)
+$(BUILD)/$(APP): $(SRC) | $(BUILD)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+$(BUILD):
+	mkdir -p $(BUILD)
+run: all
+	./$(BUILD)/$(APP)
+test: all
+	@bash tests/test.sh ./$(BUILD)/$(APP)
+clean:
+	rm -rf $(BUILD)
+watch:
+	@ls -1 *.c tests/* 2>/dev/null | entr -c make test
+M
+cat > "$name/tests/test.sh" <<'T'
+#!/usr/bin/env bash
+set -euo pipefail
+APP="${1:?path to built app required}"
+# Default golden output can be empty; customize per exercise.
+if [[ -f tests/expect.out ]]; then
+  OUTPUT="$("$APP")"
+  diff -u <(printf "%s\n" "$OUTPUT") tests/expect.out
+fi
+"$APP" >/dev/null || { echo "[TEST] Non-zero exit code." >&2; exit 1; }
+if [[ -f tests/checks.sh ]]; then
+  bash tests/checks.sh "main.c"
+fi
+echo "[TEST] All tests passed."
+T
+chmod +x "$name/tests/test.sh"
+echo "# put expected output here" > "$name/tests/expect.out"
+cat > "$name/tests/checks.sh" <<'C'
+#!/usr/bin/env bash
+set -euo pipefail
+src="${1:-main.c}"
+# Add per-exercise checks; example:
+# grep -q 'printf\s*\(' "$src" || { echo "use printf"; exit 1; }
+echo "[CHECK] (no checks defined)"
+C
+chmod +x "$name/tests/checks.sh"
+echo "Created exercise: $name"
